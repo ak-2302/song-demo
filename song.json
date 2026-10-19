@@ -3,6 +3,6 @@
   "id": "night-transit",
   "title": "Night Transit",
   "project": { "path": "project/main.od", "format": "opendaw-native" },
-  "engine": { "repository": "ak-2302/opendaw", "commit": "402171eb2af84713d9e640a1915740e8e1b76d6d" },
+  "engine": { "repository": "ak-2302/opendaw", "commit": "b9e8190b8b1a9da3fcac2d7ebf4c0fe9a821fe5b" },
   "assets": []
 }
