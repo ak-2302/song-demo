@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "id": "night-transit",
+  "title": "Night Transit",
+  "project": { "path": "project/main.od", "format": "opendaw-native" },
+  "engine": { "repository": "music-collab/opendaw", "commit": "a91f2c" },
+  "assets": []
+}
