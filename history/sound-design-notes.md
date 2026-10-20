@@ -3,3 +3,5 @@
 This branch is a reviewable example of a sound-design direction for Night Transit.
 
 - Shape a warmer low-end layer for the chorus.
+
+- Keep the transient profile open for comparison.
