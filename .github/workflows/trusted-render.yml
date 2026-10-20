@@ -1,0 +1,66 @@
+name: Trusted preview render
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_sha:
+        description: Base commit SHA
+        required: true
+        type: string
+      head_sha:
+        description: Proposal commit SHA
+        required: true
+        type: string
+      engine_commit:
+        description: Pinned openDAW commit from song.json
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trusted-render-${{ inputs.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout proposal commit only
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.head_sha }}
+          fetch-depth: 1
+
+      - name: Verify fixed manifest and commit inputs
+        env:
+          EXPECTED_ENGINE: ${{ inputs.engine_commit }}
+          BASE_SHA: ${{ inputs.base_sha }}
+          HEAD_SHA: ${{ inputs.head_sha }}
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const manifest = JSON.parse(fs.readFileSync('song.json', 'utf8'));
+          if (manifest.engine?.commit !== process.env.EXPECTED_ENGINE) throw new Error('engine commit mismatch');
+          if (!/^[0-9a-f]{40}$/.test(process.env.BASE_SHA) || !/^[0-9a-f]{40}$/.test(process.env.HEAD_SHA)) throw new Error('invalid SHA input');
+          if (process.env.HEAD_SHA !== require('node:child_process').execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()) throw new Error('checked out SHA mismatch');
+          NODE
+
+      - name: Render base preview with fixed renderer
+        env:
+          RENDER_INPUT: '{"mode":"base","engine_commit":"${{ inputs.engine_commit }}","base_sha":"${{ inputs.base_sha }}","head_sha":"${{ inputs.head_sha }}"}'
+        run: node scripts/render-preview.mjs
+
+      - name: Render proposed preview with fixed renderer
+        env:
+          RENDER_INPUT: '{"mode":"proposed","engine_commit":"${{ inputs.engine_commit }}","base_sha":"${{ inputs.base_sha }}","head_sha":"${{ inputs.head_sha }}"}'
+        run: node scripts/render-preview.mjs
+
+      - name: Upload short-lived preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trusted-render-${{ inputs.head_sha }}
+          path: render-output/
+          retention-days: 3
